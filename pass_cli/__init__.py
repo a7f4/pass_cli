@@ -3,8 +3,8 @@
 """
 CLI interface for pass.
 
-:Copyright: © 2019, Aleksandr Block.
-:License: BSD (see /LICENSE).
+:Copyright: © 2025, Aleksandr Block.
+:License: MIT (see /LICENSE).
 """
 
 import configparser
@@ -15,7 +15,7 @@ import pkg_resources
 APP_NAME = 'pass_cli'
 
 __title__ = APP_NAME
-__version__ = '0.0.1'
+__version__ = '0.0.6'
 __author__ = 'Aleksandr Block'
 __license__ = 'MIT'
 __docformat__ = 'restructuredtext en'
