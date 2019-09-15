@@ -4,7 +4,7 @@
 CLI interface for pass.
 
 :Copyright: © 2019, Aleksandr Block.
-:License: BSD (see /LICENSE).
+:License: MIT (see /LICENSE).
 """
 
 import configparser
