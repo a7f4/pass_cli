@@ -16,12 +16,11 @@ from functools import partial
 import pyperclip
 import urwid as ui
 
-from enums import Mode, Part
-from ui_parts import CommandBox, FancyListBox, CustomButton, PasswordButton
-from utils import setup_logger
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pass_cli
+from .enums import Mode, Part
+from .ui_parts import CommandBox, FancyListBox, CustomButton, PasswordButton
+from .utils import setup_logger
 
 __all__ = ('main', 'App')
 
