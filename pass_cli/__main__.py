@@ -45,6 +45,7 @@ class App:
     ]
 
     def __init__(self, config, search_query=None):
+        self.__states = []
         self.__pass_dir = os.environ.get('PASSWORD_STORE', os.path.expanduser('~/.password-store'))
         self.current = ''
         self.mode = Mode.BASE
@@ -57,6 +58,7 @@ class App:
 
         self.keys = {'q': self.quit,
                      ':': partial(self._set_mode, Mode.COMMAND),
+                     'b': self._revert_state,
                      'esc': partial(self._set_mode, Mode.BASE),
                      'enter': self._process_command}
 
@@ -78,6 +80,7 @@ class App:
 
         self._clear_box()
         self._make_password_buttons(pass_entries)
+        self.__states.append(partial(self._perform_search, query))
 
     def _make_password_buttons(self, passwords):
         """Add password buttons to the box."""
@@ -89,7 +92,7 @@ class App:
                                                 path=caption,
                                                 actions=dict(edit=self._pass_edit, callback=self._pass_load)))
 
-    def _make_items_buttons(self, entries):
+    def _make_items_buttons(self, entries, current_pass):
         """Add buttons of the password entries to the box."""
         for idx, k in enumerate(entries):
             value = entries[k]
@@ -97,7 +100,9 @@ class App:
 
             self.box.body.append(CustomButton(idx=idx,
                                               caption="{}: {}".format(k, masked),
-                                              callback=partial(self._copy_to_buffer, value)))
+                                              current_pass=current_pass,
+                                              actions=dict(edit=self._pass_edit,
+                                                           callback=partial(self._copy_to_buffer, value))))
 
     def _parse_entry(self, text):
         entries = {}
@@ -125,9 +130,14 @@ class App:
     def _set_header(self, text):
         self.header.base_widget.set_text('{0} {1}'.format(HEADER_BASE_TEXT, text))
 
-    def _clear_box(self, store_prev=False):
+    def _clear_box(self):
         del self.box.body[:]
         self.loop.screen.clear()
+
+    def _revert_state(self, originator):
+        prev_state = self.__states.pop() if len(self.__states) > 1 else self.__states[0]
+        self._clear_box()
+        prev_state()
 
     @staticmethod
     def _copy_to_buffer(value, originator, copytarget):
@@ -148,7 +158,7 @@ class App:
                 text = stdout
 
             copiable_entries = self._parse_entry(text)
-            self._make_items_buttons(copiable_entries)
+            self._make_items_buttons(copiable_entries, self.current)
         else:
             self._clear_box()
             self.box.body.append(ui.Text(('error', 'ERROR: %s' % stderr.strip())))
