@@ -9,6 +9,7 @@ CLI interface for pass.
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 from functools import partial
@@ -174,12 +175,17 @@ class App:
         user_cmd = self.command_box.text[1:].strip()
         if user_cmd == 'q':
             self.quit(originator)
+        m = re.match(r'^s\s+(?P<query>.+)', user_cmd)
+        if m:
+            query = m.group('query')
+            self._perform_search(query)
 
         self.command_box.set_edit_text("")
 
     def _set_mode(self, mode, originator):
         self._set_header(mode.value.get('header', '[N]'))
         self.mode = mode
+
         self.frame.set_focus(mode.value.get('frame', 'body'))
 
     def help(self, originator):
