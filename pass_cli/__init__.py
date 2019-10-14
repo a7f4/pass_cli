@@ -15,7 +15,7 @@ import pkg_resources
 APP_NAME = 'pass_cli'
 
 __title__ = APP_NAME
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __author__ = 'Aleksandr Block'
 __license__ = 'MIT'
 __docformat__ = 'restructuredtext en'

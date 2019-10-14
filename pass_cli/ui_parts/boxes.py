@@ -5,7 +5,6 @@ class FancyListBox(ui.ListBox):
     def keypress(self, size, key):
         """Handle keypresses."""
         if key == "e":
-            print("try to edit: %s" % self._app.current)
             self._app.pass_edit(originator=self, path=self._app.current)
 
         if self.body:

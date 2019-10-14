@@ -12,11 +12,6 @@ class CustomButton(ui.Button):
         self._w = ui.AttrMap(ui.SelectableIcon(
             [u' %s) ' % self.idx, self.caption], 0), 'button', 'button_reversed')
 
-    def keypress(self, size, key):
-        if key == "e":
-            self.actions['edit'](originator=self, path=self.path)
-        return super(CustomButton, self).keypress(size, key)
-
 
 class PasswordButton(CustomButton):
     """A password button."""
@@ -25,4 +20,3 @@ class PasswordButton(CustomButton):
         self.path = path
         self.actions = actions
         super(PasswordButton, self).__init__(caption, path, actions, idx=idx)
-
