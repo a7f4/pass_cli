@@ -1,5 +1,6 @@
 import logging
 import sys
+from functools import wraps, partial
 
 
 def setup_logger(name, format):
@@ -10,3 +11,15 @@ def setup_logger(name, format):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
+
+
+def store_last_op(app):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            app.last_op = partial(f, *args, **kwargs)
+            return f(*args, **kwargs)
+
+        return decorated
+
+    return decorator

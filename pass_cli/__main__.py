@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pass_cli
 from .enums import Mode, Part
 from .ui_parts import CommandBox, FancyListBox, CustomButton, PasswordButton
-from .utils import setup_logger
+from .utils import setup_logger, store_last_op
 
 __all__ = ('main', 'App')
 
@@ -32,6 +32,11 @@ logger = setup_logger(HEADER_BASE_TEXT, '%(asctime)s - %(name)s - %(levelname)s 
 
 def exit_msg():
     return "Happy hacking!"
+
+
+class AppState:
+    last_op = None
+    states = []
 
 
 class App:
@@ -46,7 +51,6 @@ class App:
     ]
 
     def __init__(self, config, search_query=None):
-        self.__states = []
         self.__pass_dir = os.environ.get('PASSWORD_STORE', os.path.expanduser('~/.password-store'))
         self.current = ''
         self.mode = Mode.BASE
@@ -57,9 +61,10 @@ class App:
         self.box._app = self
         self.last_query = search_query or 'gpg'
 
-        self.keys = {'q': self.quit,
+        self.keys = {'q': self._quit,
                      ':': partial(self._set_mode, Mode.COMMAND),
                      'b': self._revert_state,
+                     'r': self._reload_state,
                      'esc': partial(self._set_mode, Mode.BASE),
                      'enter': self._process_command}
 
@@ -68,6 +73,7 @@ class App:
         self._set_mode(mode=Mode.BASE, originator=self)
         self._perform_search(search_query)
 
+    @store_last_op(AppState)
     def _perform_search(self, query):
         if not query:
             return
@@ -81,7 +87,7 @@ class App:
 
         self._clear_box()
         self._make_password_buttons(pass_entries)
-        self.__states.append(partial(self._perform_search, query))
+        AppState.states.append(partial(self._perform_search, query))
 
     def _make_password_buttons(self, passwords):
         """Add password buttons to the box."""
@@ -91,7 +97,7 @@ class App:
             self.box.body.append(PasswordButton(idx=idx,
                                                 caption=caption,
                                                 path=caption,
-                                                actions=dict(edit=self._pass_edit, callback=self._pass_load)))
+                                                actions=dict(edit=self.pass_edit, callback=self._pass_load)))
 
     def _make_items_buttons(self, entries, current_pass):
         """Add buttons of the password entries to the box."""
@@ -102,7 +108,7 @@ class App:
             self.box.body.append(CustomButton(idx=idx,
                                               caption="{}: {}".format(k, masked),
                                               current_pass=current_pass,
-                                              actions=dict(edit=self._pass_edit,
+                                              actions=dict(edit=self.pass_edit,
                                                            callback=partial(self._copy_to_buffer, value))))
 
     def _parse_entry(self, text):
@@ -136,14 +142,18 @@ class App:
         self.loop.screen.clear()
 
     def _revert_state(self, originator):
-        prev_state = self.__states.pop() if len(self.__states) > 1 else self.__states[0]
+        prev_state = AppState.states.pop() if len(AppState.states) > 1 else AppState.states[0]
         self._clear_box()
         prev_state()
+
+    def _reload_state(self, originator):
+        AppState.last_op()
 
     @staticmethod
     def _copy_to_buffer(value, originator, copytarget):
         pyperclip.copy(value)
 
+    @store_last_op(AppState)
     def _pass_load(self, originator, path):
         self.current = path
         pargs = ['pass', path]
@@ -165,7 +175,7 @@ class App:
             self.box.body.append(ui.Text(('error', 'ERROR: %s' % stderr.strip())))
             self.loop.screen.clear()
 
-    def _pass_edit(self, originator, path):
+    def pass_edit(self, originator, path):
         pargs = ['pass', 'edit', path]
         p = subprocess.Popen(pargs, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
@@ -174,7 +184,7 @@ class App:
         self._set_mode(mode=Mode.BASE, originator=originator)
         user_cmd = self.command_box.text[1:].strip()
         if user_cmd == 'q':
-            self.quit(originator)
+            self._quit(originator)
         m = re.match(r'^s\s+(?P<query>.+)', user_cmd)
         if m:
             query = m.group('query')
@@ -191,7 +201,7 @@ class App:
     def help(self, originator):
         pass
 
-    def quit(self, originator):
+    def _quit(self, originator):
         """Quit the program."""
         raise ui.ExitMainLoop()
 

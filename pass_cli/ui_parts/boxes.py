@@ -4,6 +4,10 @@ import urwid as ui
 class FancyListBox(ui.ListBox):
     def keypress(self, size, key):
         """Handle keypresses."""
+        if key == "e":
+            print("try to edit: %s" % self._app.current)
+            self._app.pass_edit(originator=self, path=self._app.current)
+
         if self.body:
             currentfocus = self.focus_position
             maxindex = len(self.body) - 1
@@ -18,7 +22,7 @@ class FancyListBox(ui.ListBox):
                 newfocus = currentfocus + 1
 
             elif key.isdigit() and int(key) in range(1, 10):
-                newfocus = int(key)-1
+                newfocus = int(key) - 1
 
             if newfocus is not None:
                 if newfocus < 0:
